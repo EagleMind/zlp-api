@@ -1,6 +1,6 @@
 {
   "name": "zpl-fluent-api",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "A comprehensive fluent TypeScript API for ZPL (Zebra Programming Language) with real-world measurements and advanced barcode, graphics, and formatting support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -37,12 +37,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/zpl-fluent-api.git"
+    "url": "https://github.com/EagleMind/zlp-api.git"
   },
   "bugs": {
-    "url": "https://github.com/your-org/zpl-fluent-api/issues"
+    "url": "https://github.com/EagleMind/zlp-api/issues"
   },
-  "homepage": "https://github.com/your-org/zpl-fluent-api#readme",
+  "homepage": "https://github.com/EagleMind/zlp-api#readme",
   "devDependencies": {
     "@types/jest": "^29.5.0",
     "@types/node": "^18.15.0",
