@@ -1,0 +1,63 @@
+{
+  "name": "zpl-fluent-api",
+  "version": "2.1.0",
+  "description": "A comprehensive fluent TypeScript API for ZPL (Zebra Programming Language) with real-world measurements and advanced barcode, graphics, and formatting support",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest",
+    "lint": "eslint src/**/*.ts",
+    "prepublishOnly": "npm run build && npm test",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean"
+  },
+  "keywords": [
+    "zpl",
+    "zebra",
+    "label",
+    "printing",
+    "typescript",
+    "fluent-api",
+    "barcode",
+    "industrial",
+    "thermal",
+    "zebra-printer"
+  ],
+  "author": {
+    "name": "ZPL Fluent API Team",
+    "email": "contact@example.com"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/zpl-fluent-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/zpl-fluent-api/issues"
+  },
+  "homepage": "https://github.com/your-org/zpl-fluent-api#readme",
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^18.15.0",
+    "@typescript-eslint/eslint-plugin": "^5.57.0",
+    "@typescript-eslint/parser": "^5.57.0",
+    "eslint": "^8.37.0",
+    "jest": "^29.5.0",
+    "rimraf": "^4.4.1",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
