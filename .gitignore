@@ -1,3 +1,5 @@
 /demo
 /node_modules
 /dist
+generate-template.js
+/.claude
