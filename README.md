@@ -1,56 +1,90 @@
-# ZPL Fluent API - ZebraBuilder
+# Zebra Printer Templating API 🏷️
 
-A production-grade TypeScript library that provides a fluent, English-friendly interface for ZPL (Zebra Programming Language). Design labels using real-world measurements (inches/mm) instead of cryptic ZPL commands and dot coordinates.
+Design beautiful labels for Zebra printers without the headache of cryptic ZPL commands. Use real-world measurements (inches/mm) instead of counting dots!
 
-## Features
+[![npm version](https://img.shields.io/npm/v/zpl-fluent-api.svg)](https://www.npmjs.com/package/zpl-fluent-api)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-- **DPI-Aware**: Automatic conversion from inches/mm to printer dots
-- **Fluent Interface**: Method chaining for intuitive label design
-- **Type Safety**: Full TypeScript support with comprehensive typing
-- **Validation**: Built-in text validation for ZPL compatibility
-- **Preview Integration**: Instant browser preview via Labelary service
-- **Production Ready**: Comprehensive error handling and documentation
-- **Comprehensive ZPL Support**: All major ZPL commands including advanced barcodes, graphics, and formatting
-- **Multiple Barcode Types**: Code 128, Code 39, QR Codes, Data Matrix, Aztec, and more
-- **Advanced Graphics**: Boxes, circles, diagonal lines, and image support
-- **Printer Configuration**: Label length, print quantity, media tracking, and format management
+## ✨ Why Zebra Printer Templating API?
 
-## Installation
+Writing raw ZPL code is painful. You have to:
+- Manually convert inches to dots based on printer DPI
+- Memorize cryptic commands like `^FO150,300^BCN,225,Y,N,A`
+- Debug by trial and error
+- No type safety or autocomplete
+
+**Zebra Printer Templating API** solves all of this:
+
+```typescript
+// ❌ Old way (cryptic ZPL)
+const zpl = '^XA^FO150,150^A0N,75,75^FDASSET TAG^FS^FO150,300^BCN,225,Y,N,A^FD12345^FS^XZ';
+
+// ✅ New way (fluent & readable)
+const zpl = new ZebraBuilder(300)
+  .origin(0.5, 0.5)        // Position in inches
+  .font('0', 0.25)         // Font with real height
+  .text('ASSET TAG')
+  .origin(0.5, 1.0)
+  .barcode128('12345', 0.75)  // Barcode with readable height
+  .render();
+```
+
+## 🚀 Quick Start
+
+### Installation
 
 ```bash
 npm install zpl-fluent-api
 ```
 
-## Quick Start
+### Your First Label
 
 ```typescript
 import { ZebraBuilder } from 'zpl-fluent-api';
 
-// Basic asset tag label
-const zpl = (new ZebraBuilder(300)  // 300 DPI printer
-  .origin(0.5, 0.5)                 // Position 0.5" from left, 0.5" from top
-  .font("0", 0.25)                  // Font 0, 0.25" height
-  .text("ASSET TAG")                // Add text
-  .origin(0.5, 1.0)                 // Move to next position
-  .barcode_128("12345", 0.75)       // Add Code 128 barcode, 0.75" height
-  .render());
+// Create a simple asset tag label
+const zpl = new ZebraBuilder(300)  // 300 DPI printer
+  .origin(0.5, 0.5)               // 0.5" from left, 0.5" from top
+  .font('0', 0.25)                // Font 0, 0.25" height
+  .text('ASSET TAG')
+  .origin(0.5, 1.0)               // Move to next position
+  .barcode128('12345', 0.75)      // Code 128 barcode, 0.75" height
+  .render();
 
 console.log(zpl);
 // Output: ^XA^FO150,150^A0N,75,75^FDASSET TAG^FS^FO150,300^BCN,225,Y,N,A^FD12345^FS^XZ
+```
 
-// Preview in browser
+### Preview in Browser
+
+```typescript
 const previewUrl = new ZebraBuilder(300)
   .origin(0.5, 0.5)
-  .font("0", 0.25)
-  .text("ASSET TAG")
+  .font('0', 0.25)
+  .text('ASSET TAG')
   .origin(0.5, 1.0)
-  .barcode_128("12345", 0.75)
+  .barcode128('12345', 0.75)
   .preview();
 
 console.log(`Open this URL to preview: ${previewUrl}`);
+// Opens Labelary viewer in your browser!
 ```
 
-## API Reference
+## 📚 Features
+
+- **🎯 DPI-Aware** - Automatic conversion from inches/mm to printer dots
+- **🔗 Fluent Interface** - Chain methods for intuitive label design
+- **🛡️ Type Safety** - Full TypeScript support with comprehensive types
+- **✅ Validation** - Built-in text validation for ZPL compatibility
+- **👁️ Preview Integration** - Instant browser preview via Labelary
+- **🏭 Production Ready** - Comprehensive error handling
+- **📊 37+ ZPL Commands** - All major template-building commands
+- **🔢 10+ Barcode Types** - Code 128, Code 39, QR, Data Matrix, Aztec, EAN, UPC, and more
+- **🎨 Advanced Graphics** - Boxes, circles, ellipses, diagonal lines, and images
+- **⚙️ Label Configuration** - Length, width, quantity, orientation, and more
+
+## 📖 API Reference
 
 ### Constructor
 
@@ -58,9 +92,18 @@ console.log(`Open this URL to preview: ${previewUrl}`);
 new ZebraBuilder(dpi?: number)
 ```
 
-- `dpi`: Printer DPI (dots per inch). Default: 203
+**Parameters:**
+- `dpi` - Printer DPI (dots per inch). Default: `203`
 
-### Core Methods
+**Common DPI values:**
+- `150` (6 dpmm) - Low resolution
+- `203` (8 dpmm) - Standard (default)
+- `300` (12 dpmm) - High resolution
+- `600` (24 dpmm) - Ultra high resolution
+
+---
+
+### 📍 Positioning & Text
 
 #### `origin(x, y, unit?)`
 Sets the field position (ZPL `^FO` command).
@@ -74,209 +117,333 @@ Sets the field position (ZPL `^FO` command).
 Sets font properties (ZPL `^A` command).
 
 ```typescript
-.font("0", 0.25)                    // Font 0, 0.25" height
-.font("A", 12, 'mm')                // Font A, 12mm height
-.font("0", 0.3, 'in', 0.25, 'R')    // Font 0, 0.3" height × 0.25" width, rotated 90°
+.font('0', 0.25)                    // Font 0, 0.25" height
+.font('A', 12, 'mm')                // Font A, 12mm height
+.font('0', 0.3, 'in', 0.25, 'R')    // Font 0, 0.3" height × 0.25" width, rotated 90°
 ```
 
-#### `text(content, orientation?)`
+#### `text(content)`
 Adds text content (ZPL `^FD` command).
 
 ```typescript
-.text("Hello World")                 // Normal text
-.text("Part Number", "R")            // Rotated text
+.text('Hello World')        // Normal text
 ```
 
-#### `barcode_128(data, height, unit?, printText?, textAbove?, orientation?, checkDigit?, mode?)`
-Adds Code 128 barcode (ZPL `^BC` command).
+#### `fieldPosition(x, y, unit?)`
+Alternative field positioning (ZPL `^FT` command).
 
 ```typescript
-.barcode_128("123456789", 0.75)                    // Standard barcode
-.barcode_128("ABC123", 15, 'mm', false)            // 15mm height, no text
-.barcode_128("DATA", 0.5, 'in', true, true)        // Text above barcode
-.barcode_128("DATA", 0.5, 'in', true, false, 'N', true, 'U') // With UCC check digit and UCC mode
+.fieldPosition(1.0, 2.0)     // 1" from left, 2" from top
 ```
 
-#### `barcode_39(data, height, unit?, printText?, orientation?, checkDigit?)`
-Adds Code 39 barcode (ZPL `^B3` command).
+---
+
+### 🔢 Barcodes
+
+#### `barcode128(data, height, opts?)`
+Code 128 barcode (ZPL `^BC` command).
 
 ```typescript
-.barcode_39("ABC123", 0.5)                    // Standard barcode
-.barcode_39("DATA", 15, 'mm', false)            // 15mm height, no text
-.barcode_39("DATA", 0.5, 'in', true, 'N', true) // With modulo 43 check digit
+.barcode128('123456789', 0.75)                    // Standard
+.barcode128('ABC123', 15, 'mm', { printText: false })  // No text
+.barcode128('DATA', 0.5, 'in', { printText: true, textAbove: true })
 ```
 
-#### `qr_code(data, magnification?, errorCorrection?, orientation?, model?)`
-Adds QR Code barcode (ZPL `^BQ` command).
+#### `barcode39(data, height, opts?)`
+Code 39 barcode (ZPL `^B3` command).
 
 ```typescript
-.qr_code("https://example.com")                    // Standard QR code
-.qr_code("DATA", 3, 'H', 'R', 1)              // High error correction, rotated, V1 model
+.barcode39('ABC123', 0.5)                    // Standard
+.barcode39('DATA', 15, 'mm', { printText: false })
+.barcode39('DATA', 0.5, 'in', { checkDigit: true })
 ```
 
-#### `data_matrix(data, height, qualityLevel?, columns?, rows?, format?, orientation?, escape?, aspectRatio?)`
-Adds Data Matrix barcode (ZPL `^BX` command).
+#### `qr_code(data, opts?)`
+QR Code (ZPL `^BQ` command).
 
 ```typescript
-.data_matrix("DATA123", 100, 200, 24, 24)    // Standard Data Matrix
-.data_matrix("DATA", 100, 200, 24, 24, 0, 'N', '_', 2) // With custom format and aspect ratio
+.qr_code('https://example.com')                    // Standard
+.qr_code('DATA', { magnification: 3, errorCorrection: 'H' })
 ```
 
-#### `aztec(data, magnification?, orientation?, eci?, size?, readerInit?, structuredAppendCount?, structuredAppendMessageId?)`
-Adds Aztec barcode (ZPL `^BO` command).
+#### `dataMatrix(data, height, opts?)`
+Data Matrix (ZPL `^BX` command).
 
 ```typescript
-.aztec("DATA123", 5)                              // Standard Aztec
-.aztec("DATA", 5, 'N', true, 15, true)         // With ECI and reader initialization
+.dataMatrix('DATA123', 100, { unit: 'dots', qualityLevel: 200 })
 ```
 
-#### `box(width, height, thickness?, unit?, color?, rounding?)`
+#### `aztec(data, opts?)`
+Aztec barcode (ZPL `^BO` command).
+
+```typescript
+.aztec('DATA123', { magnification: 5 })
+```
+
+#### `barcode93(data, height, opts?)`
+Code 93 barcode (ZPL `^BA` command).
+
+```typescript
+.barcode93('ABC123', 0.5)
+```
+
+#### `interleaved2of5(data, height, opts?)`
+Interleaved 2 of 5 (ZPL `^BD` command).
+
+```typescript
+.interleaved2of5('12345', 0.75)
+```
+
+#### `ean13(data, height, opts?)`
+EAN-13 barcode (ZPL `^BE` command).
+
+```typescript
+.ean13('123456789012', 0.75)
+```
+
+#### `upcA(data, height, opts?)`
+UPC-A barcode (ZPL `^BU` command).
+
+```typescript
+.upcA('123456789012', 0.75)
+```
+
+#### `codabar(data, height, opts?)`
+Codabar barcode (ZPL `^BK` command).
+
+```typescript
+.codabar('A123456B', 0.5)
+```
+
+---
+
+### 🎨 Shapes & Graphics
+
+#### `box(width, height, opts?)`
 Draws a box/rectangle (ZPL `^GB` command).
 
 ```typescript
-.box(4, 2)                           // 4" × 2" box, 1 dot thickness
-.box(100, 50, 3, 'mm')               // 100mm × 50mm box, 3 dot thickness
-.box(2, 1, 2, 'in', 'B', 3)         // Black box with rounded corners
+.box(4, 2)                           // 4" × 2" box
+.box(100, 50, { unit: 'mm', thickness: 3 })
+.box(2, 1, { unit: 'in', color: 'B', rounding: 3 })
 ```
 
-#### `diagonal_line(xEnd, yEnd, thickness?, unit?, color?, rounding?)`
+#### `diagonalLine(xEnd, yEnd, opts?)`
 Draws a diagonal line (ZPL `^GD` command).
 
 ```typescript
-.diagonal_line(100, 100)                    // Diagonal line to 100,100
-.diagonal_line(50, 75, 2, 'mm', 'W')        // White diagonal line, 2mm thickness
+.diagonalLine(100, 100)                    // Diagonal line
+.diagonalLine(50, 75, { unit: 'mm', thickness: 2, color: 'W' })
 ```
 
-#### `circle(diameter, thickness?, unit?, color?)`
+#### `circle(diameter, opts?)`
 Draws a circle (ZPL `^GC` command).
 
 ```typescript
-.circle(50)                                // 50" diameter circle
-.circle(25, 2, 'mm', 'W')                // White circle, 25mm diameter, 2mm thickness
+.circle(50)                                // 50" diameter
+.circle(25, { unit: 'mm', thickness: 2, color: 'W' })
 ```
 
-#### `graphic_field(data, width, height, format?)`
-Adds graphic field from ASCII hex data (ZPL `^GF` command).
+#### `ellipse(horizontalDiameter, verticalDiameter, opts?)`
+Draws an ellipse (ZPL `^GE` command).
 
 ```typescript
-.graphic_field("48484848484848", 10, 10)     // ASCII hex graphic
-.graphic_field("DATA", 10, 10, 'B')             // Binary format graphic
+.ellipse(100, 50)                          // 100" × 50" ellipse
+.ellipse(50, 25, { unit: 'mm', thickness: 2 })
 ```
 
-#### `graphic_field_compressed(data, width, height, bytesPerRow)`
-Adds compressed graphic field (ZPL `^GFA` command).
+#### `graphicField(data, width, height, format?)`
+Graphic field from hex data (ZPL `^GF` command).
 
 ```typescript
-.graphic_field_compressed("COMPRESSED_DATA", 10, 10, 5) // Compressed graphic
+.graphicField('48484848484848', 10, 10)     // ASCII hex
+.graphicField('DATA', 10, 10, 'B')          // Binary format
 ```
 
-#### `print_orientation(orientation?)`
-Changes print orientation (ZPL `^PO` command).
+#### `recallGraphic(name, x, y, unit?)`
+Recall stored graphic (ZPL `^XG` command).
 
 ```typescript
-.print_orientation('I')             // Invert print orientation
-.print_orientation('N')             // Normal orientation
+.recallGraphic('LOGO', 0.5, 0.5)
 ```
 
-#### `mirror(mirror?)`
-Mirrors label output horizontally (ZPL `^PM` command).
+---
 
-```typescript
-.mirror(true)                     // Mirror label output
-```
+### ⚙️ Configuration
 
-#### `character_encoding(encoding?, sourceEncoding?)`
-Sets character encoding (ZPL `^CI` command).
-
-```typescript
-.character_encoding(28)             // UTF-8 encoding
-.character_encoding(28, 850)           // UTF-8 with CP-850 source
-```
-
-#### `default_font(name, height, unit?, width?, orientation?)`
-Sets default font for all subsequent fields (ZPL `^CF` command).
-
-```typescript
-.default_font('0', 30, 'mm', 25, 'R')    // Default rotated font
-```
-
-#### `escape_character(escape)`
-Sets escape character for special characters (ZPL `^FH` command).
-
-```typescript
-.escape_character('_')              // Use underscore as escape character
-```
-
-#### `field_reverse()`
-Reverses field colors (black on white) (ZPL `^FR` command).
-
-```typescript
-.field_reverse()                   // White text on black background
-```
-
-#### `comment(comment)`
-Adds comment to label (ZPL `^FX` command).
-
-```typescript
-.comment('This is a comment')    // Add comment
-```
-
-### Label Configuration Methods
-
-#### `label_length(length, unit?)`
+#### `labelLength(length, unit?)`
 Sets label length (ZPL `^LL` command).
 
 ```typescript
-.label_length(4, 'in')              // 4 inch label length
-.label_length(100, 'mm')             // 100mm label length
+.labelLength(4, 'in')              // 4 inch label
+.labelLength(100, 'mm')            // 100mm label
 ```
 
-#### `print_quantity(quantity, copies?, pause?)`
-Sets print quantity and copies (ZPL `^PQ` command).
+#### `labelWidth(width, unit?)`
+Sets label width (ZPL `^PW` command).
 
 ```typescript
-.print_quantity(10)                 // Print 10 labels
-.print_quantity(5, 2, 500)          // 5 labels, 2 copies each, 500ms pause
+.labelWidth(6, 'in')               // 6 inch width
 ```
 
-#### `media_tracking(mode?)`
-Sets media tracking mode (ZPL `^MN` command).
+#### `printQuantity(quantity, opts?)`
+Sets print quantity (ZPL `^PQ` command).
 
 ```typescript
-.media_tracking('A')                // Advanced tracking
-.media_tracking('N')                // No tracking
+.printQuantity(10)                 // Print 10 labels
+.printQuantity(5, { copies: 2, pause: 500 })
 ```
 
-#### `barcode_defaults(moduleWidth, wideToNarrowRatio?, height?)`
+#### `printOrientation(orientation?)`
+Changes print orientation (ZPL `^PO` command).
+
+```typescript
+.printOrientation('I')             // Invert orientation
+.printOrientation('N')             // Normal
+```
+
+#### `mirror(enabled?)`
+Mirrors label output (ZPL `^PM` command).
+
+```typescript
+.mirror(true)                      // Mirror label
+.mirror(false)                     // Normal
+```
+
+#### `characterEncoding(encoding, sourceEncoding?)`
+Sets character encoding (ZPL `^CI` command).
+
+```typescript
+.characterEncoding(28)             // UTF-8
+.characterEncoding(28, 850)        // UTF-8 with CP-850 source
+```
+
+#### `defaultFont(name, height, opts?)`
+Sets default font (ZPL `^CF` command).
+
+```typescript
+.defaultFont('0', 30, { unit: 'mm', width: 25, orientation: 'R' })
+```
+
+#### `defaultOrientation(orientation?)`
+Sets default field orientation (ZPL `^FW` command).
+
+```typescript
+.defaultOrientation('N')           // Normal
+.defaultOrientation('R')           // Rotated 90°
+```
+
+---
+
+### 🔧 Field Options
+
+#### `fieldReverse()`
+Reverses field colors (ZPL `^FR` command).
+
+```typescript
+.fieldReverse()                    // White text on black
+```
+
+#### `fieldBlock(width, maxLines, secondaryParameter, justification, hangingIndent)`
+Multi-line text block (ZPL `^FB` command).
+
+```typescript
+.fieldBlock(200, 5, 0, 'L', 0)
+```
+
+#### `fieldNumber(fieldNumber, opts?)`
+Named field (ZPL `^FN` command).
+
+```typescript
+.fieldNumber(1)
+.fieldNumber(2, { formatNumber: 100 })
+```
+
+#### `fieldVariable(fieldNumber, opts?)`
+Variable field (ZPL `^FV` command).
+
+```typescript
+.fieldVariable(1)
+```
+
+#### `fieldExtraction(sourceField, startPosition, length, opts?)`
+Data extraction (ZPL `^FE` command).
+
+```typescript
+.fieldExtraction(1, 0, 10)
+```
+
+#### `escapeCharacter(escape)`
+Sets escape character (ZPL `^FH` command).
+
+```typescript
+.escapeCharacter('_')              // Use underscore as escape
+```
+
+#### `fieldHex()`
+Enables hex mode (ZPL `^FH` command).
+
+```typescript
+.fieldHex()
+```
+
+#### `comment(text)`
+Adds comment (ZPL `^FX` command).
+
+```typescript
+.comment('This is a comment')
+```
+
+---
+
+### 🏷️ Label Settings
+
+#### `labelHome(x, y)`
+Sets label home position (ZPL `^LH` command).
+
+```typescript
+.labelHome(10, 10)
+```
+
+#### `labelShift(shift)`
+Shifts label position (ZPL `^LS` command).
+
+```typescript
+.labelShift(10)
+```
+
+#### `mediaTracking(mode?)`
+Sets media tracking (ZPL `^MN` command).
+
+```typescript
+.mediaTracking('A')                // Advanced tracking
+.mediaTracking('N')                // No tracking
+```
+
+#### `barcodeDefaults(moduleWidth, opts?)`
 Sets barcode defaults (ZPL `^BY` command).
 
 ```typescript
-.barcode_defaults(3, 2.5, 80)       // Module width 3, ratio 2.5, height 80
+.barcodeDefaults(3, { wideToNarrowRatio: 2.5, height: 80 })
 ```
 
-#### `download_format(name, data)`
-Downloads format to printer memory (ZPL `^DF` command).
+#### `downloadFormat(name, data)`
+Downloads format to memory (ZPL `^DF` command).
 
 ```typescript
-.download_format('TEMPLATE', '^XA^FO100,100^FDTEMPLATE^FS^XZ')
+.downloadFormat('TEMPLATE', '^XA^FO100,100^FDTEMPLATE^FS^XZ')
 ```
 
-#### `recall_format(name)`
-Recalls format from printer memory (ZPL `^XF` command).
+#### `recallFormat(name)`
+Recalls format from memory (ZPL `^XF` command).
 
 ```typescript
-.recall_format('TEMPLATE')
+.recallFormat('TEMPLATE')
 ```
 
-### Utility Methods
+---
 
-#### `preview(labelWidth?, labelHeight?)`
-Generates a Labelary preview URL.
-
-```typescript
-.preview()                           // Default 4×6 inch label
-.preview(3, 2)                       // 3×2 inch label
-```
+### 🛠️ Utility Methods
 
 #### `render()`
 Returns the complete ZPL code.
@@ -285,11 +452,12 @@ Returns the complete ZPL code.
 const zpl = builder.render();
 ```
 
-#### `reset()`
-Resets the builder for a new label.
+#### `preview(labelWidth?, labelHeight?)`
+Generates a Labelary preview URL.
 
 ```typescript
-builder.reset().origin(0, 0)...
+const url = builder.preview();              // Default 4×6 inch
+const url = builder.preview(3, 2);         // 3×2 inch label
 ```
 
 #### `getDPI()`
@@ -306,122 +474,167 @@ Returns current position in dots.
 const pos = builder.getCurrentPosition(); // {x: 150, y: 300}
 ```
 
-## Advanced Examples
+---
 
-### Comprehensive Product Label
+## 💡 Examples
+
+### 🏷️ Product Label
 
 ```typescript
-const comprehensiveLabel = (new ZebraBuilder(300))
-  .character_encoding(28)                    // UTF-8 encoding
-  .barcode_defaults(2, 3, 80)               // Set barcode defaults
-  .box(2, 1, 3)                            // Border box
+const productLabel = new ZebraBuilder(300)
+  .characterEncoding(28)                    // UTF-8 encoding
+  .barcodeDefaults(2, { wideToNarrowRatio: 3, height: 80 })
+  .box(2, 1, { thickness: 3 })              // Border box
   .origin(0.1, 0.1)
-  .default_font('0', 0.12, 'in')          // Default font
-  .text('PRODUCT')                           // Product name
+  .defaultFont('0', 0.12, { unit: 'in' })
+  .text('PRODUCT')
   .origin(0.1, 0.3)
-  .qr_code('https://example.com/product/123', 4, 'M')  // QR code
+  .qr_code('https://example.com/product/123', { magnification: 4, errorCorrection: 'M' })
   .origin(0.1, 0.5)
-  .barcode_39('ABC123', 0.4, 'in', true, 'N', true) // Code 39 with check digit
+  .barcode39('ABC123', 0.4, { unit: 'in', printText: true, checkDigit: true })
   .origin(1.5, 0.8)
-  .font('0', 0.15, 'in', 0.15, 'R')   // Rotated price
-  .field_reverse()                           // White text on black
-  .text('$29.99')                           // Price
-  .print_quantity(1)                         // Print one label
-  .comment('End of label')                    // Comment
+  .font('0', 0.15, { unit: 'in', width: 0.15, orientation: 'R' })
+  .fieldReverse()
+  .text('$29.99')
+  .printQuantity(1)
+  .comment('End of label')
   .render();
 ```
 
-### Multi-Barcode Label
+### 📊 Multi-Barcode Label
 
 ```typescript
-const multiBarcodeLabel = (new ZebraBuilder(203))
+const multiBarcodeLabel = new ZebraBuilder(203)
   .origin(0.25, 0.25)
   .font('0', 0.15)
   .text('MULTI-BARCODE EXAMPLE')
   .origin(0.25, 0.5)
-  .qr_code('https://example.com', 3, 'H')     // High error correction QR
+  .qr_code('https://example.com', { magnification: 3, errorCorrection: 'H' })
   .origin(0.25, 1.0)
-  .data_matrix('DATA123', 100, 200, 24, 24) // Data Matrix
+  .dataMatrix('DATA123', 100, { unit: 'dots', qualityLevel: 200, columns: 24, rows: 24 })
   .origin(0.25, 1.5)
-  .aztec('AZTEC123', 5, 'N', true, 15)      // Aztec with ECI
+  .aztec('AZTEC123', { magnification: 5, eci: true, size: 15 })
   .origin(0.25, 2.0)
-  .circle(50, 2)                             // Circle indicator
+  .circle(50, { thickness: 2 })
   .render();
 ```
 
-### Graphic-intensive Label
+### 🎨 Graphic-Intensive Label
 
 ```typescript
-const graphicLabel = (new ZebraBuilder(300))
-  .box(4, 3, 3)                            // Main border
+const graphicLabel = new ZebraBuilder(300)
+  .box(4, 3, { thickness: 3 })
   .origin(0.1, 0.1)
-  .circle(30, 2)                            // Logo circle
+  .circle(30, { thickness: 2 })
   .origin(0.5, 0.1)
-  .diagonal_line(100, 50, 2)               // Diagonal accent
+  .diagonalLine(100, 50, { thickness: 2 })
   .origin(0.1, 0.5)
   .font('0', 0.12)
-  .field_reverse()                           // White text
-  .text('GRAPHIC LABEL')                     // Title
+  .fieldReverse()
+  .text('GRAPHIC LABEL')
   .origin(0.1, 0.8)
   .font('0', 0.08)
   .text('with shapes and graphics')
   .origin(0.1, 1.2)
-  .graphic_field('48484848484848', 20, 10)     // Hex graphic data
+  .graphicField('48484848484848', 20, 10)
   .origin(0.1, 1.8)
-  .barcode_128('GRAPHIC123', 0.5)
-  .mirror(true)                              // Mirror for special effect
+  .barcode128('GRAPHIC123', 0.5)
+  .mirror(true)
   .render();
 ```
 
-### Metric Units Example
+### 📏 Metric Units
 
 ```typescript
-const metricLabel = (new ZebraBuilder(203)
+const metricLabel = new ZebraBuilder(203)
   .origin(10, 10, 'mm')      // 10mm from edges
-  .font("0", 5, 'mm')        // 5mm font height
-  .text("METRIC LABEL")
+  .font('0', 5, { unit: 'mm' })
+  .text('METRIC LABEL')
   .origin(10, 20, 'mm')
-  .barcode_128("987654321", 15, 'mm')
-  .box(90, 50, 2, 'mm')      // 90mm × 50mm box
-  .render());
+  .barcode128('987654321', 15, { unit: 'mm' })
+  .box(90, 50, { unit: 'mm', thickness: 2 })
+  .render();
 ```
 
-## DPI Support
+### 🏪 Retail Label with EAN-13
 
-The library supports common printer DPI values:
-- 150 DPI (6 dpmm)
-- 203 DPI (8 dpmm) - Default
-- 300 DPI (12 dpmm)
-- 600 DPI (24 dpmm)
+```typescript
+const retailLabel = new ZebraBuilder(300)
+  .origin(0.25, 0.25)
+  .font('0', 0.2)
+  .text('PREMIUM COFFEE')
+  .origin(0.25, 0.5)
+  .ean13('123456789012', 0.75, { printText: true })
+  .origin(0.25, 1.0)
+  .font('0', 0.15)
+  .text('$12.99')
+  .origin(2.5, 0.5)
+  .qr_code('https://shop.example.com/coffee', { magnification: 5 })
+  .render();
+```
 
-All measurements are automatically converted to dots based on the specified DPI.
+---
 
-## Error Handling
+## 🎯 DPI Support
 
-The library includes built-in validation:
+The library automatically converts your measurements to dots based on your printer's DPI:
+
+| DPI | dpmm | Use Case |
+|-----|------|----------|
+| 150 | 6 | Low resolution, draft printing |
+| 203 | 8 | Standard thermal printers (default) |
+| 300 | 12 | High resolution, detailed labels |
+| 600 | 24 | Ultra high resolution, small text |
+
+```typescript
+// All of these produce the same physical size on their respective printers
+new ZebraBuilder(203).origin(1, 1)     // 203 dots
+new ZebraBuilder(300).origin(1, 1)     // 300 dots
+new ZebraBuilder(600).origin(1, 1)     // 600 dots
+```
+
+---
+
+## ⚠️ Error Handling
+
+The library includes built-in validation to catch common mistakes:
 
 ```typescript
 try {
   const builder = new ZebraBuilder(300);
-  builder.text("Valid text");
+  builder.text('Valid text');
   const zpl = builder.render();
 } catch (error) {
-  console.error("ZPL Error:", error.message);
+  console.error('ZPL Error:', error.message);
 }
 ```
 
-## Labelary Preview
+Common errors caught:
+- Invalid DPI values
+- Unsupported characters in text
+- Invalid orientation values
 
-The `preview()` method generates URLs that work with Labelary's online ZPL viewer:
+---
+
+## 👁️ Browser Preview
+
+The `preview()` method generates URLs that work with [Labelary's online ZPL viewer](https://labelary.com):
 
 ```typescript
 const url = builder.preview();
 // Opens: http://labelary.com/viewer.html?zpl=^XA^FO100^FDHello^FS^XZ
+
+// Custom label size
+const customUrl = builder.preview(3, 2);  // 3×2 inch label
 ```
 
-## TypeScript Support
+Just open the URL in your browser to see your label rendered instantly!
 
-Full TypeScript definitions included:
+---
+
+## 🛡️ TypeScript Support
+
+Full TypeScript definitions included for excellent autocomplete and type safety:
 
 ```typescript
 import { ZebraBuilder } from 'zpl-fluent-api';
@@ -430,13 +643,52 @@ const builder: ZebraBuilder = new ZebraBuilder(300);
 const url: string = builder.preview();
 ```
 
-## Contributing
+All options interfaces are fully typed:
+
+```typescript
+const opts: Barcode128Options = {
+  printText: true,
+  textAbove: false,
+  orientation: 'N',
+  checkDigit: false,
+  mode: 'A'
+};
+```
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Here's how to help:
 
 1. Fork the repository
-2. Create a feature branch
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Add tests for new functionality
-4. Submit a pull request
+4. Ensure all tests pass (`npm test`)
+5. Submit a pull request
 
-## License
+---
 
-MIT License - see LICENSE file for details.
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- Built for developers who love clean, readable code
+- Inspired by the need to make ZPL accessible to everyone
+- Thanks to Zebra Technologies for the ZPL specification
+
+---
+
+## 📞 Support
+
+- 📖 [Documentation](https://github.com/EagleMind/zlp-api#readme)
+- 🐛 [Report Issues](https://github.com/EagleMind/zlp-api/issues)
+- 💬 [Discussions](https://github.com/EagleMind/zlp-api/discussions)
+
+---
+
+**Made with ❤️ for label designers everywhere**

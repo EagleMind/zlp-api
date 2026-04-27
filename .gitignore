@@ -1,5 +1,9 @@
-/demo
 /node_modules
 /dist
 generate-template.js
 /.claude
+/zlp-ui
+/demo
+/analysis-output
+/src/chunks
+/zlp-api/node_modules

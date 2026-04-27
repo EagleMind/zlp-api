@@ -47,6 +47,57 @@ export interface Barcode39Options {
     checkDigit?: boolean;
 }
 
+export interface Barcode93Options {
+    unit?: Unit;
+    printText?: boolean;
+    orientation?: Orientation;
+    checkDigit?: boolean;
+}
+
+export interface Interleaved2of5Options {
+    unit?: Unit;
+    height?: number;
+    printText?: boolean;
+    orientation?: Orientation;
+    checkDigit?: boolean;
+}
+
+export interface EAN13Options {
+    unit?: Unit;
+    height?: number;
+    printText?: boolean;
+    orientation?: Orientation;
+    checkDigit?: boolean;
+}
+
+export interface UPcaOptions {
+    unit?: Unit;
+    height?: number;
+    printText?: boolean;
+    orientation?: Orientation;
+    checkDigit?: boolean;
+}
+
+export interface CodabarOptions {
+    unit?: Unit;
+    height?: number;
+    printText?: boolean;
+    orientation?: Orientation;
+    startStopCharacter?: 'A' | 'B' | 'C' | 'D';
+}
+
+export interface FieldNumberOptions {
+    formatNumber?: number;
+}
+
+export interface FieldVariableOptions {
+    formatNumber?: number;
+}
+
+export interface FieldExtractionOptions {
+    // No additional options - all parameters are method arguments
+}
+
 export interface QrCodeOptions {
     magnification?: number;
     errorCorrection?: QrErrorCorrection;
@@ -246,6 +297,93 @@ export class ZebraBuilder {
         return this;
     }
 
+    barcode93(data: string, height: number, opts: Barcode93Options = {}): this {
+        if (!data || data.length === 0) {
+            throw new Error('Barcode data cannot be empty');
+        }
+        const heightDots = this.toDots(height, opts.unit ?? 'in');
+        const orientation = opts.orientation ?? 'N';
+        const showText = opts.printText !== false ? 'Y' : 'N';
+        const checkDigit = opts.checkDigit === true ? 'Y' : 'N';
+        this.commands.push(
+            `^BA${orientation},${heightDots},${showText},${checkDigit}`,
+            `^FD${data}^FS`,
+        );
+        return this;
+    }
+
+    interleaved2of5(data: string, height: number, opts: Interleaved2of5Options = {}): this {
+        if (!data || data.length === 0) {
+            throw new Error('Barcode data cannot be empty');
+        }
+        if (!/^\d+$/.test(data)) {
+            throw new Error('Interleaved 2 of 5 barcode data must contain only digits');
+        }
+        const heightDots = this.toDots(height, opts.unit ?? 'in');
+        const orientation = opts.orientation ?? 'N';
+        const showText = opts.printText !== false ? 'Y' : 'N';
+        const checkDigit = opts.checkDigit === true ? 'Y' : 'N';
+        this.commands.push(
+            `^BD${orientation},${heightDots},${showText},${checkDigit}`,
+            `^FD${data}^FS`,
+        );
+        return this;
+    }
+
+    ean13(data: string, height: number, opts: EAN13Options = {}): this {
+        if (!data || data.length === 0) {
+            throw new Error('Barcode data cannot be empty');
+        }
+        if (!/^\d{12,13}$/.test(data)) {
+            throw new Error('EAN-13 barcode data must be 12 or 13 digits');
+        }
+        const heightDots = this.toDots(height, opts.unit ?? 'in');
+        const orientation = opts.orientation ?? 'N';
+        const showText = opts.printText !== false ? 'Y' : 'N';
+        const checkDigit = opts.checkDigit === true ? 'Y' : 'N';
+        this.commands.push(
+            `^BE${orientation},${heightDots},${showText},${checkDigit}`,
+            `^FD${data}^FS`,
+        );
+        return this;
+    }
+
+    upcA(data: string, height: number, opts: UPcaOptions = {}): this {
+        if (!data || data.length === 0) {
+            throw new Error('Barcode data cannot be empty');
+        }
+        if (!/^\d{11,12}$/.test(data)) {
+            throw new Error('UPC-A barcode data must be 11 or 12 digits');
+        }
+        const heightDots = this.toDots(height, opts.unit ?? 'in');
+        const orientation = opts.orientation ?? 'N';
+        const showText = opts.printText !== false ? 'Y' : 'N';
+        const checkDigit = opts.checkDigit === true ? 'Y' : 'N';
+        this.commands.push(
+            `^BU${orientation},${heightDots},${showText},${checkDigit}`,
+            `^FD${data}^FS`,
+        );
+        return this;
+    }
+
+    codabar(data: string, height: number, opts: CodabarOptions = {}): this {
+        if (!data || data.length === 0) {
+            throw new Error('Barcode data cannot be empty');
+        }
+        const heightDots = this.toDots(height, opts.unit ?? 'in');
+        const orientation = opts.orientation ?? 'N';
+        const showText = opts.printText !== false ? 'Y' : 'N';
+        const startStop = opts.startStopCharacter ?? 'A';
+        if (!['A', 'B', 'C', 'D'].includes(startStop)) {
+            throw new Error(`Invalid Codabar start/stop character: ${startStop}. Must be A, B, C, or D.`);
+        }
+        this.commands.push(
+            `^BK${orientation},${heightDots},${showText},${startStop}`,
+            `^FD${data}^FS`,
+        );
+        return this;
+    }
+
     // -------- Shapes --------
 
     box(width: number, height: number, opts: ShapeOptions = {}): this {
@@ -275,6 +413,23 @@ export class ZebraBuilder {
         const thickness = opts.thickness ?? 1;
         const color = opts.color ?? 'B';
         this.commands.push(`^GC${this.toDots(diameter, unit)},${thickness},${color}^FS`);
+        return this;
+    }
+
+    ellipse(horizontalDiameter: number, verticalDiameter: number, opts: CircleOptions = {}): this {
+        const unit = opts.unit ?? 'in';
+        const thickness = opts.thickness ?? 1;
+        const color = opts.color ?? 'B';
+        this.commands.push(
+            `^GE${this.toDots(horizontalDiameter, unit)},${this.toDots(verticalDiameter, unit)},${thickness},${color}^FS`,
+        );
+        return this;
+    }
+
+    recallGraphic(name: string, x: number, y: number, unit: Unit = 'in'): this {
+        const xDots = this.toDots(x, unit);
+        const yDots = this.toDots(y, unit);
+        this.commands.push(`^XG${name},${xDots},${yDots}`);
         return this;
     }
 
@@ -333,18 +488,50 @@ export class ZebraBuilder {
         return this;
     }
 
+    fieldPosition(x: number, y: number, unit: Unit = 'in'): this {
+        const xDots = this.toDots(x, unit);
+        const yDots = this.toDots(y, unit);
+        this.commands.push(`^FT${xDots},${yDots}`);
+        return this;
+    }
+
+    defaultOrientation(orientation: Orientation = 'N'): this {
+        this.commands.push(`^FW${orientation}`);
+        return this;
+    }
+
     labelShift(shift: number): this {
         this.commands.push(`^LS${shift}`);
         return this;
     }
 
-    labelHome(x: number, y: number): this {
-        this.commands.push(`^LH${x},${y}`);
+    labelHome(x: number, y: number, unit: Unit = 'dots'): this {
+        const xDots = this.toDots(x, unit);
+        const yDots = this.toDots(y, unit);
+        this.commands.push(`^LH${xDots},${yDots}`);
         return this;
     }
 
-    fieldBlock(width: number, maxLines: number, secondaryParameter: number, justification: string, hangingIndent: number): this {
-        this.commands.push(`^FB${width},${maxLines},${secondaryParameter},${justification},${hangingIndent}`);
+    fieldBlock(width: number, maxLines: number, secondaryParameter: number, justification: string, hangingIndent: number, unit: Unit = 'dots'): this {
+        const widthDots = this.toDots(width, unit);
+        this.commands.push(`^FB${widthDots},${maxLines},${secondaryParameter},${justification},${hangingIndent}`);
+        return this;
+    }
+
+    fieldNumber(fieldNumber: number, opts: FieldNumberOptions = {}): this {
+        const formatNum = opts.formatNumber !== undefined ? `,${opts.formatNumber}` : '';
+        this.commands.push(`^FN${fieldNumber}${formatNum}`);
+        return this;
+    }
+
+    fieldVariable(fieldNumber: number, opts: FieldVariableOptions = {}): this {
+        const formatNum = opts.formatNumber !== undefined ? `,${opts.formatNumber}` : '';
+        this.commands.push(`^FV${fieldNumber}${formatNum}`);
+        return this;
+    }
+
+    fieldExtraction(sourceField: number, startPosition: number, length: number): this {
+        this.commands.push(`^FE${sourceField},${startPosition},${length}`);
         return this;
     }
 

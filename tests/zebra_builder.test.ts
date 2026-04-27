@@ -138,6 +138,76 @@ describe('ZebraBuilder', () => {
       expect(zpl).toContain('^BON,5,Y,15,Y');
       expect(zpl).toContain('^FDDATA123^FS');
     });
+
+    it('creates Code 93 barcode', () => {
+      const zpl = builder
+        .origin(0, 0)
+        .barcode93('ABC123', 0.5)
+        .render();
+
+      expect(zpl).toContain('^BAN,102,Y,N');
+      expect(zpl).toContain('^FDABC123^FS');
+    });
+
+    it('creates Code 93 barcode with options', () => {
+      const zpl = builder
+        .origin(0, 0)
+        .barcode93('ABC123', 0.5, { checkDigit: true, printText: false })
+        .render();
+
+      expect(zpl).toContain('^BAN,102,N,Y');
+      expect(zpl).toContain('^FDABC123^FS');
+    });
+
+    it('creates Interleaved 2 of 5 barcode', () => {
+      const zpl = builder
+        .origin(0, 0)
+        .interleaved2of5('12345', 0.75)
+        .render();
+
+      expect(zpl).toContain('^BDN,152,Y,N');
+      expect(zpl).toContain('^FD12345^FS');
+    });
+
+    it('creates EAN-13 barcode', () => {
+      const zpl = builder
+        .origin(0, 0)
+        .ean13('123456789012', 0.75)
+        .render();
+
+      expect(zpl).toContain('^BEN,152,Y,N');
+      expect(zpl).toContain('^FD123456789012^FS');
+    });
+
+    it('creates UPC-A barcode', () => {
+      const zpl = builder
+        .origin(0, 0)
+        .upcA('123456789012', 0.75)
+        .render();
+
+      expect(zpl).toContain('^BUN,152,Y,N');
+      expect(zpl).toContain('^FD123456789012^FS');
+    });
+
+    it('creates Codabar barcode with default start/stop', () => {
+      const zpl = builder
+        .origin(0, 0)
+        .codabar('A123456B', 0.5)
+        .render();
+
+      expect(zpl).toContain('^BKN,102,Y,A');
+      expect(zpl).toContain('^FDA123456B^FS');
+    });
+
+    it('creates Codabar barcode with custom start/stop', () => {
+      const zpl = builder
+        .origin(0, 0)
+        .codabar('C123456D', 0.5, { startStopCharacter: 'C' })
+        .render();
+
+      expect(zpl).toContain('^BKN,102,Y,C');
+      expect(zpl).toContain('^FDC123456D^FS');
+    });
   });
 
   describe('Graphic Methods', () => {
@@ -200,6 +270,40 @@ describe('ZebraBuilder', () => {
 
       expect(zpl).toContain('^GFA,10,10,5,4');
       expect(zpl).toContain('^FDDATA^FS');
+    });
+
+    it('draws ellipse', () => {
+      const zpl = builder
+        .origin(0, 0)
+        .ellipse(100, 50)
+        .render();
+
+      expect(zpl).toContain('^GE20300,10150,1,B^FS');
+    });
+
+    it('draws ellipse with custom options', () => {
+      const zpl = builder
+        .origin(0, 0)
+        .ellipse(50, 25, { thickness: 2, color: 'W' })
+        .render();
+
+      expect(zpl).toContain('^GE10150,5075,2,W^FS');
+    });
+
+    it('recalls stored graphic', () => {
+      const zpl = builder
+        .recallGraphic('LOGO', 0.5, 0.5)
+        .render();
+
+      expect(zpl).toContain('^XGLOGO,102,102');
+    });
+
+    it('recalls stored graphic with metric units', () => {
+      const zpl = builder
+        .recallGraphic('LOGO', 10, 10, 'mm')
+        .render();
+
+      expect(zpl).toContain('^XGLOGO,80,80');
     });
   });
 
@@ -311,6 +415,24 @@ describe('ZebraBuilder', () => {
     it('adds comment', () => {
       expect(builder.comment('This is a comment').render()).toContain('^FXThis is a comment');
     });
+
+    it('sets field position', () => {
+      const zpl = builder.fieldPosition(1, 1).render();
+      expect(zpl).toContain('^FT203,203');
+    });
+
+    it('sets field position with metric units', () => {
+      const zpl = builder.fieldPosition(10, 10, 'mm').render();
+      expect(zpl).toContain('^FT80,80');
+    });
+
+    it('sets default orientation', () => {
+      expect(builder.defaultOrientation('R').render()).toContain('^FWR');
+    });
+
+    it('sets default orientation to normal', () => {
+      expect(builder.defaultOrientation('N').render()).toContain('^FWN');
+    });
   });
 
   describe('Error Handling', () => {
@@ -327,6 +449,52 @@ describe('ZebraBuilder', () => {
       expect(() => new ZebraBuilder(-200)).toThrow(/Invalid DPI/);
       expect(() => new ZebraBuilder(Number.NaN)).toThrow(/Invalid DPI/);
       expect(() => new ZebraBuilder(Number.POSITIVE_INFINITY)).toThrow(/Invalid DPI/);
+    });
+
+    it('rejects empty barcode data for Code 93', () => {
+      expect(() => builder.barcode93('', 0.5)).toThrow('Barcode data cannot be empty');
+    });
+
+    it('rejects empty barcode data for Interleaved 2 of 5', () => {
+      expect(() => builder.interleaved2of5('', 0.5)).toThrow('Barcode data cannot be empty');
+    });
+
+    it('rejects non-digit data for Interleaved 2 of 5', () => {
+      expect(() => builder.interleaved2of5('ABC123', 0.5)).toThrow('Interleaved 2 of 5 barcode data must contain only digits');
+    });
+
+    it('rejects empty barcode data for EAN-13', () => {
+      expect(() => builder.ean13('', 0.5)).toThrow('Barcode data cannot be empty');
+    });
+
+    it('rejects invalid length for EAN-13', () => {
+      expect(() => builder.ean13('123', 0.5)).toThrow('EAN-13 barcode data must be 12 or 13 digits');
+      expect(() => builder.ean13('12345678901234', 0.5)).toThrow('EAN-13 barcode data must be 12 or 13 digits');
+    });
+
+    it('rejects non-digit data for EAN-13', () => {
+      expect(() => builder.ean13('ABCDEFGHIJKL', 0.5)).toThrow('EAN-13 barcode data must be 12 or 13 digits');
+    });
+
+    it('rejects empty barcode data for UPC-A', () => {
+      expect(() => builder.upcA('', 0.5)).toThrow('Barcode data cannot be empty');
+    });
+
+    it('rejects invalid length for UPC-A', () => {
+      expect(() => builder.upcA('123', 0.5)).toThrow('UPC-A barcode data must be 11 or 12 digits');
+      expect(() => builder.upcA('1234567890123', 0.5)).toThrow('UPC-A barcode data must be 11 or 12 digits');
+    });
+
+    it('rejects non-digit data for UPC-A', () => {
+      expect(() => builder.upcA('ABCDEFGHIJK', 0.5)).toThrow('UPC-A barcode data must be 11 or 12 digits');
+    });
+
+    it('rejects empty barcode data for Codabar', () => {
+      expect(() => builder.codabar('', 0.5)).toThrow('Barcode data cannot be empty');
+    });
+
+    it('rejects invalid start/stop character for Codabar', () => {
+      expect(() => builder.codabar('A123456B', 0.5, { startStopCharacter: 'E' as any })).toThrow('Invalid Codabar start/stop character');
     });
   });
 
@@ -382,6 +550,36 @@ describe('ZebraBuilder', () => {
       expect(zpl).toContain('^DFTEST');
       expect(zpl).toContain('^XA^FO100,100^AN0,30,30^FDTEST^FS^XZ');
       expect(zpl).toContain('^XFTEST');
+    });
+
+    it('sets label home with dots (default)', () => {
+      const zpl = builder.labelHome(100, 100).render();
+      expect(zpl).toContain('^LH100,100');
+    });
+
+    it('sets label home with inches', () => {
+      const zpl = builder.labelHome(0.5, 0.5, 'in').render();
+      expect(zpl).toContain('^LH102,102');
+    });
+
+    it('sets label home with millimeters', () => {
+      const zpl = builder.labelHome(10, 10, 'mm').render();
+      expect(zpl).toContain('^LH80,80');
+    });
+
+    it('sets field block with dots (default)', () => {
+      const zpl = builder.fieldBlock(200, 5, 0, 'L', 0).render();
+      expect(zpl).toContain('^FB200,5,0,L,0');
+    });
+
+    it('sets field block with inches', () => {
+      const zpl = builder.fieldBlock(1, 5, 0, 'L', 0, 'in').render();
+      expect(zpl).toContain('^FB203,5,0,L,0');
+    });
+
+    it('sets field block with millimeters', () => {
+      const zpl = builder.fieldBlock(25, 5, 0, 'L', 0, 'mm').render();
+      expect(zpl).toContain('^FB200,5,0,L,0');
     });
   });
 
